@@ -5,61 +5,16 @@ use rspotify::{
     OAuth,
 };
 
+use log::{debug, error, info};
 use std::env;
 
-use log::{debug, error, info};
-use log4rs::append::console::ConsoleAppender;
-use log4rs::append::file::FileAppender;
-use log4rs::config::{Appender, Logger, Root};
-use log4rs::encode::pattern::PatternEncoder;
-use log4rs::Handle;
+// libs
+mod logging;
 
 #[tokio::main]
 async fn main() {
-    // You can use any logger for debugging.
-
-    let stdout = ConsoleAppender::builder()
-        .encoder(Box::new(PatternEncoder::new(
-            "{d(%Y-%m-%d %H:%M:%S)(utc)} - {h({l})}: {m}{n}",
-        )))
-        .build();
-
-    // Create a file appender
-    let requests = FileAppender::builder()
-        .encoder(Box::new(PatternEncoder::new(
-            "{d(%Y-%m-%d %H:%M:%S)(utc)} - {h({l})}: {m}{n}",
-        )))
-        .build("log/requests.log")
-        .expect("Failed to create file appender");
-
-    // Build the log4rs configuration
-    let config = log4rs::Config::builder()
-        .appender(Appender::builder().build("stdout", Box::new(stdout)))
-        .appender(Appender::builder().build("requests", Box::new(requests)))
-        .logger(Logger::builder().build("app::backend::db", log::LevelFilter::Info))
-        .logger(
-            Logger::builder()
-                .appender("requests")
-                .additive(false)
-                .build("app::requests", log::LevelFilter::Debug),
-        )
-        .build(
-            Root::builder()
-                .appender("stdout")
-                .appender("requests")
-                .build(log::LevelFilter::Debug),
-        )
-        .unwrap();
-
-    // use handle to change logger configuration at runtime
-    let _handle = log4rs::init_config(config).expect("Failed to initialize log4rs");
-
-    // Set the log4rs handle as the global logger
-    log::set_max_level(log::LevelFilter::Debug);
-
-    // Example log statements
-    error!("This is an error message");
-    info!("This is an info message");
+    // log init
+    let _handle = logging::log_init();
 
     // TODO: Don't use AuthCodeSpotify (Authorization code) authentication, since this method
     // is not suitable for applications, where client id and secret can't be safely stored.
