@@ -1,15 +1,16 @@
+//! main.rs
+//! sonic main
+
 use rspotify::{
-    model::{AdditionalType, ArtistId, Country, Market, UserId},
-    prelude::*,
-    scopes, AuthCodeSpotify, ClientCredsSpotify, ClientError, ClientResult, Config, Credentials,
-    OAuth,
+    Config,
 };
 
-use log::{debug, error, info};
+use log::debug;
 
 // libs
 mod auth;
 mod logging;
+// mod pkce;
 
 #[tokio::main]
 async fn main() {
@@ -24,21 +25,16 @@ async fn main() {
     };
     debug!("config: {:?}", config);
 
-    // create client
-    // TODO: Don't use AuthCodeSpotify (Authorization code) authentication, since this method
-    // is not suitable for applications, where client id and secret can't be safely stored.
-    // Instead, implement AuthCodePkceSpotify (Authorization code with PKCE) authentication.
-    // This method is also encourages by Spotify.
-    let spotify = auth::auth_code_flow(config).await;
+    let spotify = auth::auth_code_pkce_flow().await;
 
-    let artists = spotify
-        .artist(ArtistId::from_id("0OdUWJ0sBjDrqHygGUXeCF").unwrap())
-        .await;
-    debug!("artists: {:?}", artists);
+    // let artists = spotify
+    //     .artist(ArtistId::from_id("0OdUWJ0sBjDrqHygGUXeCF").unwrap())
+    //     .await;
+    // debug!("artists: {:?}", artists);
 
-    let user = spotify
-        .user(UserId::from_id("5sjbm8n5l7i0nlucndi0yp2cm").unwrap())
-        .await
-        .unwrap();
-    debug!("user: {:?}", user);
+    // let user = spotify
+    //     .user(UserId::from_id("5sjbm8n5l7i0nlucndi0yp2cm").unwrap())
+    //     .await
+    //     .unwrap();
+    // debug!("user: {:?}", user);
 }

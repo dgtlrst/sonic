@@ -1,20 +1,16 @@
-// performs authentication with spotify
+//! auth.rs
+//! performs authentication with spotify
 
-use log::{debug, error, info};
 use std::env;
 
-use tokio;
-
 use rspotify::{
-    model::{AdditionalType, ArtistId, Country, Market, UserId},
     prelude::*,
-    scopes, AuthCodePkceSpotify, AuthCodeSpotify, ClientCredsSpotify, ClientError, ClientResult,
-    Config, Credentials, OAuth,
+    scopes, AuthCodePkceSpotify, Credentials, OAuth,
 };
 
 const RSPOTIFY_CLIENT_ID: &str = "291fcee697f94999bf71fbf499bdfb54";
 const RSPOTIFY_CLIENT_SECRET: &str = "439e720432e149c0bb3176a3b5e1713c";
-const RSPOTIFY_REDIRECT_URI: &str = "https://example.org/callback";
+const RSPOTIFY_REDIRECT_URI: &str = "http://localhost:8888/callback";
 
 fn _set_env_var() {
     env::set_var("RSPOTIFY_CLIENT_ID", RSPOTIFY_CLIENT_ID);
@@ -31,39 +27,20 @@ fn oauth() -> OAuth {
     return OAuth::from_env(scopes!("playlist-read-private")).unwrap();
 }
 
-fn ac_spotify_client(creds: Credentials, oauth: OAuth, config: Config) -> AuthCodeSpotify {
-    // AuthCodeSpotify is used for authorization code flow
-    return AuthCodeSpotify::with_config(creds, oauth, config);
-}
-
-pub async fn auth_code_flow(config: Config) -> AuthCodeSpotify {
+pub async fn auth_code_pkce_flow() -> AuthCodePkceSpotify {
     _set_env_var();
 
-    // init credentials
     let creds = creds();
-    debug!("creds: {:?}", creds);
-
-    // init oauth
     let oauth = oauth();
-    debug!("oauth: {:?}", oauth);
 
-    let spotify = ac_spotify_client(creds, oauth, config);
-    debug!("spotify: {:?}", spotify);
+    let mut spotify = AuthCodePkceSpotify::new(creds.clone(), oauth.clone());
 
-    // prompt for token
-    let url = spotify.get_authorize_url(false).unwrap();
+    let url = spotify.get_authorize_url(None).unwrap();
 
-    match spotify.prompt_for_token(&url).await {
-        rspotify::ClientResult::Ok(()) => debug!("token: {:?}", spotify.get_token()),
-        Err(e) => error!("error: {:?}", e),
-    }
+    spotify.prompt_for_token(&url).await.unwrap();
 
-    let code = spotify.get_code_from_user(&url);
-    debug!("code: {:?}", code);
+    let history = spotify.current_playback(None, None::<Vec<_>>).await;
+    println!("Response: {history:?}");
 
-    return spotify;
-}
-
-pub async fn auth_code_pkce_flow(config: Config) -> AuthCodePkceSpotify {
-    unimplemented!();
+    spotify
 }
