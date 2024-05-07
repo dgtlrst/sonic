@@ -10,7 +10,6 @@ use log::debug;
 // libs
 mod auth;
 mod logging;
-// mod pkce;
 
 #[tokio::main]
 async fn main() {
