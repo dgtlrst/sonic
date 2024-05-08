@@ -3,8 +3,7 @@
 
 use std::{collections::HashMap, env};
 // use rocket::http::uri::Query;
-use warp::{Filter};
-
+use warp::Filter;
 
 use rspotify::{
     prelude::*,
@@ -46,20 +45,17 @@ pub async fn auth_code_pkce_flow() -> AuthCodePkceSpotify {
     let urlresp = response.url().to_string();
     println!("Response: {urlresp}");
     match webbrowser::open(&url) {
-        Ok(_) => println!("Opened {} in your browser.", url),
-        Err(why) => eprintln!(
+        Ok(_) => log::debug!("[AUTH] Opened {} in your browser.", url),
+        Err(why) => log::error!(
             "Error when trying to open an URL in your browser: {:?}. \
              Please navigate here manually: {}",
             why, url
         ),
     }
 
-    log::info!("[AUTH]");
-
+    // TODO: separate this
     // warp server, start it at the beginning of the application
     // listen on localhost:8888/callback for the response
-    // Add the following line to your Cargo.toml file under the [dependencies] section
-
     let callback = warp::path("callback")
         .and(warp::get())
         .and(warp::filters::query::query())
@@ -68,6 +64,8 @@ pub async fn auth_code_pkce_flow() -> AuthCodePkceSpotify {
     let routes = callback.with(warp::log("auth"));
 
     warp::serve(routes).run(([127, 0, 0, 1], 8888)).await;
+    /////////////////////////
+
     spotify
 }
 
