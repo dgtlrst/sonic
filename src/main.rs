@@ -1,39 +1,18 @@
 //! main.rs
 //! sonic main
 
-use rspotify::{
-    Config,
-};
-
-use log::debug;
-
 // libs
 mod auth;
 mod logging;
 
 #[tokio::main]
 async fn main() {
-    // log init
+    // Initialize logging
     let _handle = logging::log_init();
 
-    // configure client
-    let config: Config = Config {
-        token_cached: true,
-        token_refreshing: true,
-        ..Default::default()
-    };
-    debug!("config: {:?}", config);
+    // log example
+    log::info!("Starting Sonic");
 
-    let spotify = auth::auth_code_pkce_flow().await;
-
-    // let artists = spotify
-    //     .artist(ArtistId::from_id("0OdUWJ0sBjDrqHygGUXeCF").unwrap())
-    //     .await;
-    // debug!("artists: {:?}", artists);
-
-    // let user = spotify
-    //     .user(UserId::from_id("5sjbm8n5l7i0nlucndi0yp2cm").unwrap())
-    //     .await
-    //     .unwrap();
-    // debug!("user: {:?}", user);
+    // Perform PKCE authentication flow
+    let code = auth::auth_code_pkce_flow().await;
 }

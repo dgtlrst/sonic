@@ -1,7 +1,10 @@
 //! auth.rs
 //! performs authentication with spotify
 
-use std::env;
+use std::{collections::HashMap, env};
+// use rocket::http::uri::Query;
+use warp::{Filter};
+
 
 use rspotify::{
     prelude::*,
@@ -23,7 +26,7 @@ fn creds() -> Credentials {
 }
 
 fn oauth() -> OAuth {
-    // TODO: hardcoded scopes
+    // TODO: un-hardcode scopes, they are used to choose what kind of access we are requesting
     return OAuth::from_env(scopes!("playlist-read-private")).unwrap();
 }
 
@@ -37,10 +40,39 @@ pub async fn auth_code_pkce_flow() -> AuthCodePkceSpotify {
 
     let url = spotify.get_authorize_url(None).unwrap();
 
-    spotify.prompt_for_token(&url).await.unwrap();
+    // perform an http request to the url
+    let response = reqwest::get(&url).await.unwrap();
 
-    let history = spotify.current_playback(None, None::<Vec<_>>).await;
-    println!("Response: {history:?}");
+    let urlresp = response.url().to_string();
+    println!("Response: {urlresp}");
+    match webbrowser::open(&url) {
+        Ok(_) => println!("Opened {} in your browser.", url),
+        Err(why) => eprintln!(
+            "Error when trying to open an URL in your browser: {:?}. \
+             Please navigate here manually: {}",
+            why, url
+        ),
+    }
 
+    log::info!("[AUTH]");
+
+    // warp server, start it at the beginning of the application
+    // listen on localhost:8888/callback for the response
+    // Add the following line to your Cargo.toml file under the [dependencies] section
+
+    let callback = warp::path("callback")
+        .and(warp::get())
+        .and(warp::filters::query::query())
+        .map(callback_handler);
+
+    let routes = callback.with(warp::log("auth"));
+
+    warp::serve(routes).run(([127, 0, 0, 1], 8888)).await;
     spotify
+}
+
+fn callback_handler(query: HashMap<String, String>) -> impl warp::Reply {
+    println!("Query: {:#?}", query);
+    // TODO: handle the query + add protection!!
+    warp::reply::html("Callback received")
 }
