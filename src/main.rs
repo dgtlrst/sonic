@@ -15,4 +15,6 @@ async fn main() {
 
     // Perform PKCE authentication flow
     let code = auth::auth_code_pkce_flow().await;
+
+    // TODO: generate token (look at cachable token example in rspotify!)
 }
