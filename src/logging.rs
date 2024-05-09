@@ -31,7 +31,7 @@ pub fn log_init() -> Handle {
             Logger::builder()
                 .appender("requests")
                 .additive(false)
-                .build("app::requests", log::LevelFilter::Debug)
+                .build("app::requests", log::LevelFilter::Debug),
         )
         .build(
             Root::builder()

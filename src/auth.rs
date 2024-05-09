@@ -1,14 +1,8 @@
 //! auth.rs
 //! performs authentication with spotify
 
-use std::{collections::HashMap, env};
-// use rocket::http::uri::Query;
-use warp::Filter;
-
-use rspotify::{
-    prelude::*,
-    scopes, AuthCodePkceSpotify, Credentials, OAuth,
-};
+use std::{env};
+use rspotify::{scopes, AuthCodePkceSpotify, Credentials, OAuth};
 
 const RSPOTIFY_CLIENT_ID: &str = "291fcee697f94999bf71fbf499bdfb54";
 const RSPOTIFY_CLIENT_SECRET: &str = "439e720432e149c0bb3176a3b5e1713c";
@@ -20,20 +14,20 @@ fn _set_env_var() {
     env::set_var("RSPOTIFY_REDIRECT_URI", RSPOTIFY_REDIRECT_URI);
 }
 
-fn creds() -> Credentials {
+fn _creds() -> Credentials {
     return Credentials::from_env().unwrap();
 }
 
-fn oauth() -> OAuth {
+fn _oauth() -> OAuth {
     // TODO: un-hardcode scopes, they are used to choose what kind of access we are requesting
     return OAuth::from_env(scopes!("playlist-read-private")).unwrap();
 }
 
 pub async fn auth_code_pkce_flow() -> AuthCodePkceSpotify {
-    _set_env_var();
+    _set_env_var();                     // set the environment variables
 
-    let creds = creds();
-    let oauth = oauth();
+    let creds = _creds();
+    let oauth = _oauth();
 
     let mut spotify = AuthCodePkceSpotify::new(creds.clone(), oauth.clone());
 
@@ -49,28 +43,11 @@ pub async fn auth_code_pkce_flow() -> AuthCodePkceSpotify {
         Err(why) => log::error!(
             "Error when trying to open an URL in your browser: {:?}. \
              Please navigate here manually: {}",
-            why, url
+            why,
+            url
         ),
     }
-
-    // TODO: separate this
-    // warp server, start it at the beginning of the application
-    // listen on localhost:8888/callback for the response
-    let callback = warp::path("callback")
-        .and(warp::get())
-        .and(warp::filters::query::query())
-        .map(callback_handler);
-
-    let routes = callback.with(warp::log("auth"));
-
-    warp::serve(routes).run(([127, 0, 0, 1], 8888)).await;
-    /////////////////////////
 
     spotify
 }
 
-fn callback_handler(query: HashMap<String, String>) -> impl warp::Reply {
-    println!("Query: {:#?}", query);
-    // TODO: handle the query + add protection!!
-    warp::reply::html("Callback received")
-}
