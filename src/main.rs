@@ -10,8 +10,6 @@
     // - provide option for exporting playlists to a file
     // - provide option for importing playlists from a file
 
-use std::io::Write;
-use tokio::signal;
 
 // libs
 mod auth;
